@@ -1,0 +1,26 @@
+<%= form_for @petition, :html => { :class => 'form-horizontal' } do |f| %>
+  <div class="control-group">
+    <%= f.label :request_url, :class => 'control-label' %>
+    <div class="controls">
+      <%= f.text_field :request_url, :class => 'text_field' %>
+    </div>
+  </div>
+  <div class="control-group">
+    <%= f.label :css_selector, :class => 'control-label' %>
+    <div class="controls">
+      <%= f.text_field :css_selector, :class => 'text_field' %>
+    </div>
+  </div>
+  <div class="control-group">
+    <%= f.label :callback_url, :class => 'control-label' %>
+    <div class="controls">
+      <%= f.text_field :callback_url, :class => 'text_field' %>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <%= f.submit nil, :class => 'btn btn-primary' %>
+    <%= link_to t('.cancel', :default => t("helpers.links.cancel")),
+                petitions_path, :class => 'btn' %>
+  </div>
+<% end %>

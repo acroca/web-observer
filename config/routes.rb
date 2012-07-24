@@ -1,4 +1,6 @@
 Parsio::Application.routes.draw do
+  resources :petitions
+
   root to: 'application#test'
   # The priority is based upon order of creation:
   # first created -> highest priority.

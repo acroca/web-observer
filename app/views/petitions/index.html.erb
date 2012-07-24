@@ -1,0 +1,40 @@
+<%- model_class = Petition -%>
+<div class="page-header">
+  <h1><%=t '.title', :default => model_class.model_name.human.pluralize %></h1>
+</div>
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th><%= model_class.human_attribute_name(:id) %></th>
+      <th><%= model_class.human_attribute_name(:request_url) %></th>
+      <th><%= model_class.human_attribute_name(:css_selector) %></th>
+      <th><%= model_class.human_attribute_name(:callback_url) %></th>
+      <th><%= model_class.human_attribute_name(:created_at) %></th>
+      <th><%=t '.actions', :default => t("helpers.actions") %></th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @petitions.each do |petition| %>
+      <tr>
+        <td><%= link_to petition.id, petition_path(petition) %></td>
+        <td><%= petition.request_url %></td>
+        <td><%= petition.css_selector %></td>
+        <td><%= petition.callback_url %></td>
+        <td><%=l petition.created_at %></td>
+        <td>
+          <%= link_to t('.edit', :default => t("helpers.links.edit")),
+                      edit_petition_path(petition), :class => 'btn btn-mini' %>
+          <%= link_to t('.destroy', :default => t("helpers.links.destroy")),
+                      petition_path(petition),
+                      :method => :delete,
+                      :confirm => t('.confirm', :default => t("helpers.links.confirm", :default => 'Are you sure?')),
+                      :class => 'btn btn-mini btn-danger' %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<%= link_to t('.new', :default => t("helpers.links.new")),
+            new_petition_path,
+            :class => 'btn btn-primary' %>
