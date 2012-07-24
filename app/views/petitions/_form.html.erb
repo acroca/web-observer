@@ -1,26 +1,11 @@
-<%= form_for @petition, :html => { :class => 'form-horizontal' } do |f| %>
-  <div class="control-group">
-    <%= f.label :request_url, :class => 'control-label' %>
-    <div class="controls">
-      <%= f.text_field :request_url, :class => 'text_field' %>
-    </div>
-  </div>
-  <div class="control-group">
-    <%= f.label :css_selector, :class => 'control-label' %>
-    <div class="controls">
-      <%= f.text_field :css_selector, :class => 'text_field' %>
-    </div>
-  </div>
-  <div class="control-group">
-    <%= f.label :callback_url, :class => 'control-label' %>
-    <div class="controls">
-      <%= f.text_field :callback_url, :class => 'text_field' %>
-    </div>
-  </div>
+<%= simple_form_for @petition, :html => { :class => 'form-horizontal' } do |f| %>
+  <%= f.input :request_url, :placeholder => 'http://www.example.com' %>
+  <%= f.input :css_selector, :placeholder => '.list > span.number:first' %>
+  <%= f.input :callback_url, :placeholder => 'http://www.example.com' %>
 
   <div class="form-actions">
-    <%= f.submit nil, :class => 'btn btn-primary' %>
+    <%= f.button :submit, :class => 'btn-primary' %>
     <%= link_to t('.cancel', :default => t("helpers.links.cancel")),
-                petitions_path, :class => 'btn' %>
+                  petitions_path, :class => 'btn btn-danger' %>
   </div>
 <% end %>
