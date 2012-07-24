@@ -89,6 +89,58 @@ describe Executor do
     c2_v.should == '2'
   end 
 
-  
+  describe ".process_batch" do
+    it 'updaes the last_value' do
+      petition = FactoryGirl.create(:petition)
+      Petition.stub(:next_batch){ [petition] }
+      Executor.any_instance.should_receive(:queue).with(
+        petition.request_url,
+        petition.css_selector,
+        petition.last_value,
+        petition.callback_url).and_yield("the new value")
+
+      Executor.any_instance.should_receive(:run)
+      expect {
+        Executor.process_batch
+      }.to change{petition.reload.last_value}.to("the new value")
+    end
+
+    it 'updates the last_check even without yielding' do
+      petition = FactoryGirl.create(:petition)
+      Petition.stub(:next_batch){ [petition] }
+      Executor.any_instance.should_receive(:queue).with(
+        petition.request_url,
+        petition.css_selector,
+        petition.last_value,
+        petition.callback_url)
+
+      Executor.any_instance.should_receive(:run)
+      expect {
+        Executor.process_batch
+      }.to change{petition.reload.last_check}
+    end
+
+    it 'processes multiple petitions' do
+      petitions = [FactoryGirl.create(:petition, css_selector: 'h1'), FactoryGirl.create(:petition, css_selector: 'h2')]
+      Petition.stub(:next_batch){ petitions }
+      Executor.any_instance.should_receive(:queue).with(
+        petitions.first.request_url,
+        petitions.first.css_selector,
+        petitions.first.last_value,
+        petitions.first.callback_url).and_yield("the new value for the first one")
+      Executor.any_instance.should_receive(:queue).with(
+        petitions.second.request_url,
+        petitions.second.css_selector,
+        petitions.second.last_value,
+        petitions.second.callback_url).and_yield("the new value for the second one")
+
+      Executor.any_instance.should_receive(:run)
+      expect {
+        expect {
+          Executor.process_batch
+        }.to change{petitions.first.reload.last_value}.to("the new value for the first one")
+      }.to change{petitions.second.reload.last_value}.to("the new value for the second one")
+    end
+  end
 
 end

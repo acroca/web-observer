@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20120724123239) do
+ActiveRecord::Schema.define(:version => 20120724145547) do
 
   create_table "petitions", :force => true do |t|
     t.string   "request_url"
@@ -19,6 +19,8 @@ ActiveRecord::Schema.define(:version => 20120724123239) do
     t.string   "callback_url"
     t.datetime "created_at",   :null => false
     t.datetime "updated_at",   :null => false
+    t.string   "last_value"
+    t.datetime "last_check"
   end
 
 end

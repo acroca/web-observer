@@ -1,5 +1,18 @@
 class Executor
 
+  def self.process_batch
+    executor = self.new
+    petitions = Petition.next_batch
+
+    petitions.each do |petition|
+      executor.queue(petition.request_url, petition.css_selector, petition.last_value, petition.callback_url) do |v|
+        petition.update_attribute(:last_value, v)
+      end
+      petition.update_attribute(:last_check, Time.now)
+    end
+    executor.run
+  end
+
   def initialize
     @hydra = Typhoeus::Hydra.new
   end

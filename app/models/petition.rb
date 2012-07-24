@@ -5,6 +5,8 @@ class Petition < ActiveRecord::Base
   validates_format_of :callback_url, :with => URI::regexp(%w(http https))
   validate :css_selector_format
 
+  scope :next_batch, order("last_check ASC").limit(100)
+
   private
 
   def css_selector_format
