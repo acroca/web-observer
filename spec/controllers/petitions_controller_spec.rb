@@ -24,7 +24,7 @@ describe PetitionsController do
   # Petition. As you add validations to Petition, be sure to
   # update the return value of this method accordingly.
   def valid_attributes
-    {}
+    FactoryGirl.attributes_for(:petition)
   end
 
   # This should return the minimal set of values that should be in the session

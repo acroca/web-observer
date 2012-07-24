@@ -6,12 +6,14 @@ describe "petitions/index" do
       stub_model(Petition,
         :request_url => "Request Url",
         :css_selector => "Css Selector",
-        :callback_url => "Callback Url"
+        :callback_url => "Callback Url",
+        :created_at => Time.now
       ),
       stub_model(Petition,
         :request_url => "Request Url",
         :css_selector => "Css Selector",
-        :callback_url => "Callback Url"
+        :callback_url => "Callback Url",
+        :created_at => Time.now
       )
     ])
   end
