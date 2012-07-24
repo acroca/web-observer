@@ -5,6 +5,7 @@ gem 'sqlite3'
 gem 'json'
 gem 'jquery-rails'
 gem 'simple_form', "~> 2.0"
+gem 'nokogiri', '~> 1.5'
 
 group :test do
   gem "rspec-rails", "~> 2.11"
