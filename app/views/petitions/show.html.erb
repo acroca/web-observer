@@ -11,9 +11,11 @@
   <dt><strong><%= model_class.human_attribute_name(:callback_url) %>:</strong></dt>
   <dd><%= @petition.callback_url %></dd>
   <dt><strong><%= model_class.human_attribute_name(:last_value) %>:</strong></dt>
-  <dd><%= @petition.last_value %></dd>
+  <dd><%= @petition.last_value.presence || "<i>empty</i>".html_safe %></dd>
   <dt><strong><%= model_class.human_attribute_name(:last_check) %>:</strong></dt>
   <dd><%=l(@petition.last_check) if @petition.last_check %></dd>
+  <dt><strong><%= model_class.human_attribute_name(:last_error) %>:</strong></dt>
+  <dd><%= @petition.last_error.presence || "<i>empty</i>".html_safe %></dd>
 </dl>
 
 <div class="form-actions">

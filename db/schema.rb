@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20120724145547) do
+ActiveRecord::Schema.define(:version => 20120724170311) do
 
   create_table "petitions", :force => true do |t|
     t.string   "request_url"
@@ -21,6 +21,7 @@ ActiveRecord::Schema.define(:version => 20120724145547) do
     t.datetime "updated_at",   :null => false
     t.string   "last_value"
     t.datetime "last_check"
+    t.text     "last_error"
   end
 
 end

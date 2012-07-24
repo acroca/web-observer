@@ -1,7 +1,7 @@
 <%= simple_form_for @petition, :html => { :class => 'form-horizontal' } do |f| %>
-  <%= f.input :request_url, :placeholder => 'http://www.example.com' %>
-  <%= f.input :css_selector, :placeholder => '.list > span.number:first' %>
-  <%= f.input :callback_url, :placeholder => 'http://www.example.com' %>
+  <%= f.input :request_url, :placeholder => 'http://www.example.com', :input_html => {:class => 'input-xxlarge'} %>
+  <%= f.input :css_selector, :placeholder => '.list > span.number:first', :input_html => {:class => 'input-xxlarge'} %>
+  <%= f.input :callback_url, :placeholder => 'http://www.example.com', :input_html => {:class => 'input-xxlarge'} %>
 
   <div class="form-actions">
     <%= f.button :submit, :class => 'btn-primary' %>

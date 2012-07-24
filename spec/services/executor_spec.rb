@@ -10,10 +10,11 @@ describe Executor do
     let(:response) { {:body => content} }
     let!(:request){ stub_http_request(:get, "http://www.example.com/req").to_return(response) }
     let!(:callback) { stub_http_request(:post, "http://www.example.com/cb").with(:body => expected) }
-    let(:queue_callback) { lambda{|v| @value = v } }
+    let(:queue_callback) { lambda{|v, e| @value = v; @exception = e } }
 
     before do 
       @value = nil
+      @exception = nil
       executor = Executor.new
       executor.queue('http://www.example.com/req', css_selector, old_value, 'http://www.example.com/cb', &queue_callback)
       executor.run
@@ -43,6 +44,7 @@ describe Executor do
         request.should have_been_requested
         callback.should_not have_been_requested
         @value.should be_nil
+        @exception.should be_kind_of(Executor::InvalidResponseCode)
       end
     end
 
@@ -54,6 +56,7 @@ describe Executor do
         request.should have_been_requested
         callback.should_not have_been_requested
         @value.should be_nil
+        @exception.should be_kind_of(Executor::ElementNotFound)
       end
     end
 
@@ -64,6 +67,7 @@ describe Executor do
         request.should have_been_requested
         callback.should_not have_been_requested
         @value.should be_nil
+        @exception.should be_kind_of(Executor::ElementNotFound)
       end
     end
 
@@ -77,8 +81,8 @@ describe Executor do
 
     c1_v = c2_v = nil
     executor = Executor.new
-    executor.queue('http://www.example.com/1/req', 'div', nil, 'http://www.example.com/1/cb') { |v| c1_v = v}
-    executor.queue('http://www.example.com/2/req', 'span', nil, 'http://www.example.com/2/cb'){ |v| c2_v = v}
+    executor.queue('http://www.example.com/1/req', 'div', nil, 'http://www.example.com/1/cb') { |v,e| c1_v = v}
+    executor.queue('http://www.example.com/2/req', 'span', nil, 'http://www.example.com/2/cb'){ |v,e| c2_v = v}
     executor.run
 
     r1.should have_been_requested
@@ -97,7 +101,7 @@ describe Executor do
         petition.request_url,
         petition.css_selector,
         petition.last_value,
-        petition.callback_url).and_yield("the new value")
+        petition.callback_url).and_yield("the new value", nil)
 
       Executor.any_instance.should_receive(:run)
       expect {
@@ -127,12 +131,12 @@ describe Executor do
         petitions.first.request_url,
         petitions.first.css_selector,
         petitions.first.last_value,
-        petitions.first.callback_url).and_yield("the new value for the first one")
+        petitions.first.callback_url).and_yield("the new value for the first one", nil)
       Executor.any_instance.should_receive(:queue).with(
         petitions.second.request_url,
         petitions.second.css_selector,
         petitions.second.last_value,
-        petitions.second.callback_url).and_yield("the new value for the second one")
+        petitions.second.callback_url).and_yield("the new value for the second one", nil)
 
       Executor.any_instance.should_receive(:run)
       expect {

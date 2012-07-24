@@ -10,6 +10,7 @@
       <th><%= model_class.human_attribute_name(:css_selector) %></th>
       <th><%= model_class.human_attribute_name(:callback_url) %></th>
       <th><%= model_class.human_attribute_name(:created_at) %></th>
+      <th><%= model_class.human_attribute_name(:last_check) %></th>
       <th><%=t '.actions', :default => t("helpers.actions") %></th>
     </tr>
   </thead>
@@ -21,6 +22,7 @@
         <td><%= petition.css_selector %></td>
         <td><%= petition.callback_url %></td>
         <td><%=l petition.created_at %></td>
+        <td><%=l(petition.last_check) if petition.last_check %></td>
         <td>
           <%= link_to t('.edit', :default => t("helpers.links.edit")),
                       edit_petition_path(petition), :class => 'btn btn-mini' %>
