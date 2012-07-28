@@ -1,8 +1,10 @@
 class Petition < ActiveRecord::Base
-  attr_accessible :callback_url, :css_selector, :request_url
+  attr_accessible :name, :callback_url, :css_selector, :request_url
 
-  validates_format_of :request_url, :with => URI::regexp(%w(http https))
-  validates_format_of :callback_url, :with => URI::regexp(%w(http https))
+  validates :request_url, presence: true, format: URI::regexp(%w(http https))
+  validates :callback_url, presence: true, format: URI::regexp(%w(http https))
+  validates :name, presence: true
+  validates :css_selector, presence: true
   validate :css_selector_format
 
   scope :next_batch, order("last_check ASC").limit(100)

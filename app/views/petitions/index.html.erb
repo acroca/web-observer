@@ -5,10 +5,7 @@
 <table class="table table-striped">
   <thead>
     <tr>
-      <th><%= model_class.human_attribute_name(:id) %></th>
-      <th><%= model_class.human_attribute_name(:request_url) %></th>
-      <th><%= model_class.human_attribute_name(:css_selector) %></th>
-      <th><%= model_class.human_attribute_name(:callback_url) %></th>
+      <th><%= model_class.human_attribute_name(:name) %></th>
       <th><%= model_class.human_attribute_name(:created_at) %></th>
       <th><%= model_class.human_attribute_name(:last_check) %></th>
       <th><%=t '.actions', :default => t("helpers.actions") %></th>
@@ -17,10 +14,7 @@
   <tbody>
     <% @petitions.each do |petition| %>
       <tr>
-        <td><%= link_to petition.id, petition_path(petition) %></td>
-        <td><%= petition.request_url %></td>
-        <td><%= petition.css_selector %></td>
-        <td><%= petition.callback_url %></td>
+        <td><%= link_to petition.name.to_s, petition_path(petition) %></td>
         <td><%=l petition.created_at %></td>
         <td><%=l(petition.last_check) if petition.last_check %></td>
         <td>

@@ -8,16 +8,17 @@ class Executor
     petitions = Petition.next_batch
 
     petitions.each do |petition|
-      petition.update_attribute(:last_check, Time.now)
+      petition.last_check = Time.now
+      petition.save
       executor.queue(petition.request_url, petition.css_selector, petition.last_value, petition.callback_url) do |v, err|
         if err.nil?
           petition.last_value = v
           petition.last_error = nil
-          petition.save
         else
-          petition.update_attribute(:last_error, err.inspect)
+          petition.last_error = err.inspect
           Rails.logger.error("Found an error executing petition #{petition.id}: #{err.inspect}")
         end
+        petition.save
       end
     end
     executor.run
