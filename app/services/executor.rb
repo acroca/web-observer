@@ -10,7 +10,7 @@ class Executor
     petitions.each do |petition|
       petition.last_check = Time.now
       petition.save
-      executor.queue(petition.request_url, petition.css_selector, petition.last_value, petition.callback_url) do |v, err|
+      executor.queue(petition) do |v, err|
         if err.nil?
           petition.last_value = v
           petition.last_error = nil
@@ -28,10 +28,10 @@ class Executor
     @hydra = Typhoeus::Hydra.new
   end
   
-  def queue(request_url, css_selector, old_value, callback_url, &cb)
-    request = Typhoeus::Request.new(request_url)
+  def queue(petition, &cb)
+    request = Typhoeus::Request.new(petition.request_url)
     request.on_complete do |response|
-      process_response(response, callback_url, old_value, css_selector, &cb)
+      process_response(response, petition, &cb)
     end
     @hydra.queue request
   rescue Exception => e
@@ -46,27 +46,27 @@ class Executor
   private
   
 
-  def process_response(response, callback_url, old_value, css_selector, &cb)
+  def process_response(response, petition, &cb)
     raise InvalidResponseCode.new(response.code) if response.code >= 300 || response.code < 200
 
-    new_content = get_new_content(response.body, css_selector)
+    new_content = get_new_content(response.body, petition)
     return unless new_content
-    return if new_content == old_value
+    return if new_content == petition.last_value
 
-    request_callback(callback_url, new_content, &cb)
+    request_callback(petition, new_content, &cb)
   rescue Exception => e
     cb.call(nil, e)
   end
 
-  def request_callback(callback_url, value, &cb)
-    @hydra.queue Typhoeus::Request.new(callback_url, method: :post, body: value)
+  def request_callback(petition, value, &cb)
+    @hydra.queue Typhoeus::Request.new(petition.callback_url, method: :post, body: value)
     cb.call(value, nil) if block_given?
   end
 
-  def get_new_content(body, css_selector)
+  def get_new_content(body, petition)
     doc = Nokogiri::HTML(body)
-    element = doc.css(css_selector).first
-    raise ElementNotFound.new([body, css_selector]) unless element
+    element = doc.css(petition.css_selector).first
+    raise ElementNotFound.new([body, petition.css_selector]) unless element
 
     element.content
   end

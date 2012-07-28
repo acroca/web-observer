@@ -6,7 +6,12 @@ describe Executor do
     let(:css_selector) { "div:nth(2)" }
     let(:expected) { 'content' }
     let(:old_value) { nil } 
-    
+
+    let(:petition) { FactoryGirl.create(:petition,
+      css_selector: css_selector, 
+      last_value: old_value, 
+      request_url: 'http://www.example.com/req', 
+      callback_url: 'http://www.example.com/cb') }
     let(:response) { {:body => content} }
     let!(:request){ stub_http_request(:get, "http://www.example.com/req").to_return(response) }
     let!(:callback) { stub_http_request(:post, "http://www.example.com/cb").with(:body => expected) }
@@ -16,7 +21,7 @@ describe Executor do
       @value = nil
       @exception = nil
       executor = Executor.new
-      executor.queue('http://www.example.com/req', css_selector, old_value, 'http://www.example.com/cb', &queue_callback)
+      executor.queue(petition, &queue_callback)
       executor.run
     end  
 
@@ -74,6 +79,8 @@ describe Executor do
   end
 
   it "executes multple items in queue" do
+    petition_1 = FactoryGirl.create(:petition, callback_url: "http://www.example.com/1/cb", request_url: "http://www.example.com/1/req", css_selector: 'div')
+    petition_2 = FactoryGirl.create(:petition, callback_url: "http://www.example.com/2/cb", request_url: "http://www.example.com/2/req", css_selector: 'span')
     r1 = stub_http_request(:get, "http://www.example.com/1/req").to_return(body: '<div>1</div>')
     r2 = stub_http_request(:get, "http://www.example.com/2/req").to_return(body: '<span>2</span>')
     c1 = stub_http_request(:post, "http://www.example.com/1/cb").with(:body => '1')
@@ -81,8 +88,8 @@ describe Executor do
 
     c1_v = c2_v = nil
     executor = Executor.new
-    executor.queue('http://www.example.com/1/req', 'div', nil, 'http://www.example.com/1/cb') { |v,e| c1_v = v}
-    executor.queue('http://www.example.com/2/req', 'span', nil, 'http://www.example.com/2/cb'){ |v,e| c2_v = v}
+    executor.queue(petition_1) { |v,e| c1_v = v}
+    executor.queue(petition_2){ |v,e| c2_v = v}
     executor.run
 
     r1.should have_been_requested
@@ -94,14 +101,10 @@ describe Executor do
   end 
 
   describe ".process_batch" do
-    it 'updaes the last_value' do
+    it 'updates the last_value' do
       petition = FactoryGirl.create(:petition)
       Petition.stub(:next_batch){ [petition] }
-      Executor.any_instance.should_receive(:queue).with(
-        petition.request_url,
-        petition.css_selector,
-        petition.last_value,
-        petition.callback_url).and_yield("the new value", nil)
+      Executor.any_instance.should_receive(:queue).with(petition).and_yield("the new value", nil)
 
       Executor.any_instance.should_receive(:run)
       expect {
@@ -112,12 +115,7 @@ describe Executor do
     it 'updates the last_check even without yielding' do
       petition = FactoryGirl.create(:petition)
       Petition.stub(:next_batch){ [petition] }
-      Executor.any_instance.should_receive(:queue).with(
-        petition.request_url,
-        petition.css_selector,
-        petition.last_value,
-        petition.callback_url)
-
+      Executor.any_instance.should_receive(:queue).with(petition)
       Executor.any_instance.should_receive(:run)
       expect {
         Executor.process_batch
@@ -127,17 +125,8 @@ describe Executor do
     it 'processes multiple petitions' do
       petitions = [FactoryGirl.create(:petition, css_selector: 'h1'), FactoryGirl.create(:petition, css_selector: 'h2')]
       Petition.stub(:next_batch){ petitions }
-      Executor.any_instance.should_receive(:queue).with(
-        petitions.first.request_url,
-        petitions.first.css_selector,
-        petitions.first.last_value,
-        petitions.first.callback_url).and_yield("the new value for the first one", nil)
-      Executor.any_instance.should_receive(:queue).with(
-        petitions.second.request_url,
-        petitions.second.css_selector,
-        petitions.second.last_value,
-        petitions.second.callback_url).and_yield("the new value for the second one", nil)
-
+      Executor.any_instance.should_receive(:queue).with(petitions.first).and_yield("the new value for the first one", nil)
+      Executor.any_instance.should_receive(:queue).with(petitions.second).and_yield("the new value for the second one", nil)
       Executor.any_instance.should_receive(:run)
       expect {
         expect {
