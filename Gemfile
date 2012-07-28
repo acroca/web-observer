@@ -1,7 +1,7 @@
 source 'https://rubygems.org'
 
 gem 'rails', "~> 3.2"
-gem 'sqlite3'
+
 gem 'json'
 gem 'jquery-rails'
 gem 'simple_form', "~> 2.0"
@@ -20,4 +20,12 @@ group :assets do
   gem 'coffee-rails', '~> 3.2.1'
   gem 'uglifier', '>= 1.0.3'
   gem 'twitter-bootstrap-rails', "~> 2.1"
+end
+
+group :development, :test do
+  gem 'sqlite3'
+end
+
+group :production do
+  gem 'pg'
 end
