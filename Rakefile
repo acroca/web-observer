@@ -4,4 +4,4 @@
 
 require File.expand_path('../config/application', __FILE__)
 
-Parsio::Application.load_tasks
+WebObserver::Application.load_tasks

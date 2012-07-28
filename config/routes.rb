@@ -1,4 +1,4 @@
-Parsio::Application.routes.draw do
+WebObserver::Application.routes.draw do
   resources :petitions
 
   root to: 'application#test'
