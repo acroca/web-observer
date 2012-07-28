@@ -7,6 +7,7 @@ gem 'jquery-rails'
 gem 'simple_form', "~> 2.0"
 gem 'typhoeus', "~> 0.4"
 gem 'nokogiri', '~> 1.5'
+gem 'pg'
 
 group :test do
   gem "rspec-rails", "~> 2.11"
@@ -22,11 +23,6 @@ group :assets do
   gem 'twitter-bootstrap-rails', "~> 2.1"
 end
 
-group :development, :test do
-  gem 'sqlite3'
-end
-
 group :production do
-  gem 'pg'
   gem 'unicorn'
 end
