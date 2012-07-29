@@ -33,6 +33,21 @@ describe Executor do
       }.to change{petition.reload.last_value}.to(expected)
     end
 
+    context "when the old value is nil" do
+      let(:old_value) { nil }
+      it "doesn't call the callback" do
+        request.should have_been_requested
+        callback.should_not have_been_requested
+      end
+
+      it "sets the new value" do
+        expect{
+          executor.run
+        }.to change{petition.reload.last_value}.to(expected)
+      end
+
+    end
+
     context "when the old value is the same as the new value" do
       let(:old_value) { expected }
       it "doesn't call the callback" do
