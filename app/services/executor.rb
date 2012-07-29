@@ -10,16 +10,7 @@ class Executor
     petitions.each do |petition|
       petition.last_check = Time.now
       petition.save
-      executor.queue(petition) do |v, err|
-        if err.nil?
-          petition.last_value = v
-          petition.last_error = nil
-        else
-          petition.last_error = err.inspect
-          Rails.logger.error("Found an error executing petition #{petition.id}: #{err.inspect}")
-        end
-        petition.save
-      end
+      executor.queue(petition)
     end
     executor.run
   end
@@ -28,14 +19,14 @@ class Executor
     @hydra = Typhoeus::Hydra.new
   end
   
-  def queue(petition, &cb)
+  def queue(petition)
     request = Typhoeus::Request.new(petition.request_url)
     request.on_complete do |response|
-      process_response(response, petition, &cb)
+      process_response(response, petition)
     end
     @hydra.queue request
   rescue Exception => e
-    cb.call(nil, e)
+    set_error(petition, e)
   end
   
   def run
@@ -46,21 +37,24 @@ class Executor
   private
   
 
-  def process_response(response, petition, &cb)
+  def process_response(response, petition)
     raise InvalidResponseCode.new(response.code) if response.code >= 300 || response.code < 200
 
     new_content = get_new_content(response.body, petition)
     return unless new_content
     return if new_content == petition.last_value
 
-    request_callback(petition, new_content, &cb)
+    petition.last_value = new_content
+    petition.last_error = nil
+    petition.save
+
+    request_callback(petition, new_content)
   rescue Exception => e
-    cb.call(nil, e)
+    set_error(petition, e)
   end
 
-  def request_callback(petition, value, &cb)
+  def request_callback(petition, value)
     @hydra.queue Typhoeus::Request.new(petition.callback_url, method: :post, body: value)
-    cb.call(value, nil) if block_given?
   end
 
   def get_new_content(body, petition)
@@ -69,6 +63,12 @@ class Executor
     raise ElementNotFound.new([body, petition.css_selector]) unless element
 
     element.content
+  end
+
+  def set_error(petition, e)
+    petition.last_error = e.inspect
+    petition.save
+    Rails.logger.error("Found an error executing petition #{petition.id}: #{e.inspect}")
   end
 
 end

@@ -15,23 +15,21 @@ describe Executor do
     let(:response) { {:body => content} }
     let!(:request){ stub_http_request(:get, "http://www.example.com/req").to_return(response) }
     let!(:callback) { stub_http_request(:post, "http://www.example.com/cb").with(:body => expected) }
-    let(:queue_callback) { lambda{|v, e| @value = v; @exception = e } }
+    let(:executor) { Executor.new }
 
     before do 
-      @value = nil
-      @exception = nil
-      executor = Executor.new
-      executor.queue(petition, &queue_callback)
-      executor.run
+      executor.queue(petition)
     end  
 
     it "works" do
+      executor.run
       request.should have_been_requested
       callback.should have_been_requested
     end
   
-    it "yields the new value the queue callback" do
-      @value.should == expected
+    it "sets the new value" do
+      petition.should_receive(:set_value).with(expected)
+      executor.run
     end
 
     context "when the old value is the same as the new value" do
@@ -39,17 +37,15 @@ describe Executor do
       it "doesn't call the callback" do
         request.should have_been_requested
         callback.should_not have_been_requested
-        @value.should be_nil
       end
     end
 
     context "when the response is not 2xx" do
       let(:response) { {:status => 404} }
       it "doesn't call the callback" do
+        executor.run
         request.should have_been_requested
         callback.should_not have_been_requested
-        @value.should be_nil
-        @exception.should be_kind_of(Executor::InvalidResponseCode)
       end
     end
 
@@ -58,10 +54,9 @@ describe Executor do
       let(:css_selector) { 'div' }
       
       it "doesn't call the callback" do
+        executor.run
         request.should have_been_requested
         callback.should_not have_been_requested
-        @value.should be_nil
-        @exception.should be_kind_of(Executor::ElementNotFound)
       end
     end
 
@@ -69,71 +64,59 @@ describe Executor do
       let(:response) { {body: '--------'} }
       
       it "doesn't call the callback" do
+        executor.run
         request.should have_been_requested
         callback.should_not have_been_requested
-        @value.should be_nil
-        @exception.should be_kind_of(Executor::ElementNotFound)
       end
     end
 
   end
 
   it "executes multple items in queue" do
-    petition_1 = FactoryGirl.create(:petition, callback_url: "http://www.example.com/1/cb", request_url: "http://www.example.com/1/req", css_selector: 'div')
-    petition_2 = FactoryGirl.create(:petition, callback_url: "http://www.example.com/2/cb", request_url: "http://www.example.com/2/req", css_selector: 'span')
+    petition_1 = FactoryGirl.create(:petition,
+      callback_url: "http://www.example.com/1/cb", 
+      request_url: "http://www.example.com/1/req",
+      css_selector: 'div')
+    petition_2 = FactoryGirl.create(:petition, 
+      callback_url: "http://www.example.com/2/cb", 
+      request_url: "http://www.example.com/2/req", 
+      css_selector: 'span')
     r1 = stub_http_request(:get, "http://www.example.com/1/req").to_return(body: '<div>1</div>')
     r2 = stub_http_request(:get, "http://www.example.com/2/req").to_return(body: '<span>2</span>')
     c1 = stub_http_request(:post, "http://www.example.com/1/cb").with(:body => '1')
     c2 = stub_http_request(:post, "http://www.example.com/2/cb").with(:body => '2')
 
-    c1_v = c2_v = nil
     executor = Executor.new
-    executor.queue(petition_1) { |v,e| c1_v = v}
-    executor.queue(petition_2){ |v,e| c2_v = v}
+    executor.queue(petition_1)
+    executor.queue(petition_2)
     executor.run
 
     r1.should have_been_requested
     r2.should have_been_requested
     c1.should have_been_requested
     c2.should have_been_requested
-    c1_v.should == '1'
-    c2_v.should == '2'
   end 
 
   describe ".process_batch" do
-    it 'updates the last_value' do
-      petition = FactoryGirl.create(:petition)
-      Petition.stub(:next_batch){ [petition] }
-      Executor.any_instance.should_receive(:queue).with(petition).and_yield("the new value", nil)
-
+    it 'queues the petitions' do
+      petition1 = FactoryGirl.create(:petition)
+      petition2 = FactoryGirl.create(:petition)
+      Petition.stub(:next_batch){ [petition1, petition2] }
+      Executor.any_instance.should_receive(:queue).with(petition1)
+      Executor.any_instance.should_receive(:queue).with(petition2)
       Executor.any_instance.should_receive(:run)
-      expect {
-        Executor.process_batch
-      }.to change{petition.reload.last_value}.to("the new value")
+
+      Executor.process_batch
     end
 
-    it 'updates the last_check even without yielding' do
+    it 'updates the last_check' do
       petition = FactoryGirl.create(:petition)
       Petition.stub(:next_batch){ [petition] }
       Executor.any_instance.should_receive(:queue).with(petition)
       Executor.any_instance.should_receive(:run)
-      expect {
+      expect{
         Executor.process_batch
       }.to change{petition.reload.last_check}
     end
-
-    it 'processes multiple petitions' do
-      petitions = [FactoryGirl.create(:petition, css_selector: 'h1'), FactoryGirl.create(:petition, css_selector: 'h2')]
-      Petition.stub(:next_batch){ petitions }
-      Executor.any_instance.should_receive(:queue).with(petitions.first).and_yield("the new value for the first one", nil)
-      Executor.any_instance.should_receive(:queue).with(petitions.second).and_yield("the new value for the second one", nil)
-      Executor.any_instance.should_receive(:run)
-      expect {
-        expect {
-          Executor.process_batch
-        }.to change{petitions.first.reload.last_value}.to("the new value for the first one")
-      }.to change{petitions.second.reload.last_value}.to("the new value for the second one")
-    end
   end
-
 end
