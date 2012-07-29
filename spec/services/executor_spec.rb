@@ -5,7 +5,7 @@ describe Executor do
     let(:content) { "<div>1</div><div>content</div><h1>3</h1>" }
     let(:css_selector) { "div:nth(2)" }
     let(:expected) { 'content' }
-    let(:old_value) { nil } 
+    let(:old_value) { 'old' } 
 
     let(:petition) { FactoryGirl.create(:petition,
       css_selector: css_selector, 
@@ -28,8 +28,9 @@ describe Executor do
     end
   
     it "sets the new value" do
-      petition.should_receive(:set_value).with(expected)
-      executor.run
+      expect{
+        executor.run
+      }.to change{petition.reload.last_value}.to(expected)
     end
 
     context "when the old value is the same as the new value" do
@@ -76,11 +77,13 @@ describe Executor do
     petition_1 = FactoryGirl.create(:petition,
       callback_url: "http://www.example.com/1/cb", 
       request_url: "http://www.example.com/1/req",
-      css_selector: 'div')
+      css_selector: 'div',
+      last_value: 'old')
     petition_2 = FactoryGirl.create(:petition, 
       callback_url: "http://www.example.com/2/cb", 
       request_url: "http://www.example.com/2/req", 
-      css_selector: 'span')
+      css_selector: 'span',
+      last_value: 'old')
     r1 = stub_http_request(:get, "http://www.example.com/1/req").to_return(body: '<div>1</div>')
     r2 = stub_http_request(:get, "http://www.example.com/2/req").to_return(body: '<span>2</span>')
     c1 = stub_http_request(:post, "http://www.example.com/1/cb").with(:body => '1')

@@ -44,11 +44,11 @@ class Executor
     return unless new_content
     return if new_content == petition.last_value
 
+    request_callback(petition, new_content) unless petition.last_value.nil?
+
     petition.last_value = new_content
     petition.last_error = nil
     petition.save
-
-    request_callback(petition, new_content)
   rescue Exception => e
     set_error(petition, e)
   end
